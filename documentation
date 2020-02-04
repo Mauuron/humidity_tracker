@@ -1,9 +1,0 @@
-### Documentation ###
-
-Steps:
-1. Set up the Raspberry Pi and the DHT22 sensor
-2. Create Thingspeak-channel
-2. Python script
-3. Run script when booting Raspberry Pi
-4. Create IFTTT-applet
-5. Create Thingspeak React and ThingHTTP
