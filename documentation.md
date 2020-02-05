@@ -15,6 +15,11 @@
 
 ### 2. Create Thingspeak-channel
 
+Navigate to Channels > My Channels and press "New Channel". Enter your prefered name and a description if you like. Tick the number of fields you want to use. In this example, tick two and name them something like "humidity" and "temperature". Leave the remaining fields empty and press "Save Channel".
+
+Now, open your new channel and navigate to "API Keys". Write down both the Write API Key and the Rad API Key. On the top of the site you also find your Channel ID. Write that down as well.
+
+If you like, you can make lots of adjustments to your charts by clicking on the pen next to the X in the chart. For example since I measure every 60 seconds, I plot 2880 results in total to always see the course of the last two days. Additionally, I set "Average" to 15, which means ThingSpeak takes data from 15 minutes and then plots the average. I have done this because the graph looks a lot nicer like that. Further I have set "Rounding" to 3 because the sensor is not that precise anyway. 
 
 ### 3. Python script
 
@@ -72,6 +77,8 @@ if __name__ == "__main__":
         time.sleep(60) #time in seconds between reading, minimum 15 
 ```
 
+I suggest you to not measure more than once every minute, because otherwise you´re creating lots of data and the temperature and humidity wont change that much in one minute that you are losing important data.
+
 ### 4. Run script when booting Raspberry Pi
 
 To automatically run your script when you´re booting your Raspberry Pi, run the following command:
@@ -86,8 +93,22 @@ Now, scroll to the bottom and add the following line, depending on the path of y
 sudo python /home/pi/Documents/humidity_tracker.py
 ```
 
-
 ### 5. Create IFTTT-applet
 
+If your script is running, you should already see your data being plotted in the ThingSpeak channel. Now, we want to create a IFTTT-applet to get smartphone notifications when for example the humidity exceeds a certain value.
 
-### 6. Create Thingspeak React and ThingHTTP
+Go to ifttt.com, sign in and navigate to "Create". Press on "this", search for the service "Webhooks" and select "Receive a web request" as the trigger. Enter an event name and write that one down, we will need that in step 6 again (for example humidity_alert)
+
+Now press on "that", search for the service "Notification" and select "Send a **rich** notification from the IFTTT app" as the action. Enter a title of the notification and write your preferred message. Additionally to just the alert that the humidity is too high, I wanted IFTTT to tell me the exact values of the curret humidity and temperature, so my message is:
+
+"The event {{EventName}} occurred! Humidity: {{Value1}}%, temperature: {{Value2}}°C. Better open a window!"
+
+The values are not rounded in the notification (!) but I don´t know how to set that up. Let me know if anyone figured that out.
+
+After your applet has been saved, navigate to Explore and search for Webhooks. Click on "services" and then on "Webhooks". Now navigate to "Documentation" (top right corner). You should now see a page with the title "To trigger an Event". Copy and save the url to make a POST or GET web request. It should look like that: "https://maker.ifttt.com/trigger/{event}/with/key/YOUR_KEY". Now we can set up the web request via ThingSpeak.
+
+### 6. Create ThingSpeak React and ThingHTTP
+
+Go back to thingspeak.com and navigate to Apps > ThingHTTP and press "New ThingHTTP". Enter a prefered name and the url you have just saved in the field "URL:". Make sure the url ends with your key and replace the {event} with your event name, in my example *humidity_alert*. Set the method to *POST* and the content type to *Application/json*. Set the body to *{ "value1" : "%%channel_CHANNELID_field_2%%", "value2": "%%channel_CHANNELID_field_1%%"}* and replace *CHANNELID* with your ID. Adjust the field numbers so that value1 is the humidity and value2 the temperature. Now you can save the ThingHTTP.
+
+Last but not least, we need to create a trigger. Navigate to Apps > React and press "New React". Again enter your preferred name. Change the condition type to *Numeric*, the test frequency to *On data insertion*, select your channel, enter your condition (for example *"Field 2 (Humidity) is greater than or equal to 60"*), select the just created ThingHTTP and set run to *Only the first time the condition is met*. Like that, you will recieve a notification only once the condition is met until it is no longer met. If you set this on "every time ...", you will recieve notifications every time you insert data until the condition is no longer met. Now finally press "Save". Your humidity-tracker should now perfectly work! To test it, you can set the condition to a value lower than the current value and run the react every time the condiiton is met. If you recieve lots of notifications now, it works perfectly and you can reset the values.
