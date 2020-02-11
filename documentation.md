@@ -1,7 +1,7 @@
 # Documentation
 
 ### Table of contents:
-1. Set up the Raspberry Pi and the DHT22 sensor
+1. Setup the Raspberry Pi and the DHT22 sensor
 2. Create ThingSpeak-channel
 3. Python script
 3. Run script when booting Raspberry Pi
@@ -11,8 +11,22 @@
 
 
 
-### 1. Set up the Raspberry Pi and the DHT22 sensor
+### 1. Setup the Raspberry Pi and the DHT22 sensor
 
+With the sensor, there comes a quite good documentation what the different pins are. I would suggest you to buy the the sensor already soldered with the resistor, so you have only three pins.
+
+I glued a small breadboard on top of my Raspberry Pi case and simply plugged the sensor in. 
+From left to right, the pins of the sensor mean the following:
+
+| number | meaning |
+|--------|---------|
+| 1      | VCC     |
+| 2      | DATA    |
+| 3      | GROUND  |
+
+Connect pin 1 with a *3V3 power* pin of your Raspberry Pi, pin 2 with the *GPIO pin* you want to use and pin 3 obviously with a *Ground* pin of your Raspberry Pi.
+
+And thats basically the whole setup. Admittedly, that does not look very nice, but it does what it´s supposed to do.
 
 ### 2. Create Thingspeak-channel
 
@@ -44,6 +58,7 @@ sudo nano humidity_tracker.py
 ```
 
 Add the following code to the file. Save with CTRL-O and close with CTRL-X.
+You also find the code as a python file in the repository.
 
 ```python
 import thingspeak
@@ -116,7 +131,7 @@ Last but not least, we need to create a trigger. Navigate to Apps > React and pr
 
 ### 7. **Addition**: Two sensors and check for invalid values
 
-Since I have two DHT22 sensors, I adapted the script to measure with both sensors but write the average value into the chart. Additionally, I sometimes got alerts saying the humidity is something like 8000% or the temperature suddenly is something like 1°C or 80°C. Although I only plot the average of the last fifteen values, the react still triggers because one value has been absolutely wrong. To avoid that, I check if the measured value is higher or lower than a certain value. If so, I write the values measure one minute (since I write every 60 seconds) ago. Here is the responding code:
+Since I have two DHT22 sensors, I adapted the script to measure with both sensors but write the average value into the chart. Additionally, I sometimes got alerts saying the humidity is something like 8000% or the temperature suddenly is something like 1°C or 80°C. Although I only plot the average of the last fifteen values, the react still triggers because one value has been absolutely wrong. To avoid that, I check if the measured value is higher or lower than a certain value. If so, I write the values measure one minute (since I write every 60 seconds) ago. Here is the responding code (you also find it as a python file in the repository):
 
 ```python
 import thingspeak
