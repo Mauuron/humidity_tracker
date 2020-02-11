@@ -19,7 +19,7 @@ I glued a small breadboard on top of my Raspberry Pi case and simply plugged the
 From left to right, the pins of the sensor mean the following:
 
 | number | meaning |
-|--------|---------|
+|:------:|---------|
 | 1      | VCC     |
 | 2      | DATA    |
 | 3      | GROUND  |
