@@ -7,6 +7,7 @@
 3. Run script when booting Raspberry Pi
 4. Create IFTTT-applet
 6. Create Thingspeak React and ThingHTTP
+7. **Addition**: Two sensors and check for invalid values
 
 
 
@@ -112,3 +113,63 @@ After your applet has been saved, navigate to Explore and search for Webhooks. C
 Go back to thingspeak.com and navigate to Apps > ThingHTTP and press "New ThingHTTP". Enter a prefered name and the url you have just saved in the field "URL:". Make sure the url ends with your key and replace the {event} with your event name, in my example **humidity_alert**. Set the method to **POST** and the content type to **Application/json**. Set the body to **{ "value1" : "%%channel_CHANNELID_field_2%%", "value2": "%%channel_CHANNELID_field_1%%"}** and replace **CHANNELID** with your ID. Adjust the field numbers so that value1 is the humidity and value2 the temperature. Now you can save the ThingHTTP.
 
 Last but not least, we need to create a trigger. Navigate to Apps > React and press "New React". Again enter your preferred name. Change the condition type to **Numeric**, the test frequency to **On data insertion**, select your channel, enter your condition (for example **"Field 2 (Humidity) is greater than or equal to 60"**), select the just created ThingHTTP and set run to **Only the first time the condition is met**. Like that, you will recieve a notification only once the condition is met until it is no longer met. If you set this on "every time ...", you will recieve notifications every time you insert data until the condition is no longer met. Now finally press "Save". Your humidity-tracker should now perfectly work! To test it, you can set the condition to a value lower than the current value and run the react every time the condiiton is met. If you recieve lots of notifications now, it works perfectly and you can reset the values.
+
+### 7. **Addition**: Two sensors and check for invalid values
+
+Since I have two DHT22 sensors, I adapted the script to measure with both sensors but write the average value into the chart. Additionally, I sometimes got alerts saying the humidity is something like 8000% or the temperature suddenly is something like 1°C or 80°C. Although I only plot the average of the last fifteen values, the react still triggers because one value has been absolutely wrong. To avoid that, I check if the measured value is higher or lower than a certain value. If so, I write the values measure one minute (since I write every 60 seconds) ago. Here is the responding code:
+
+```python
+import thingspeak
+import time
+import Adafruit_DHT
+ 
+write_key  = 'WRITE_API' #Enter your write api
+read_key   = 'READ_API' #Enter your read api
+pin1 = RASPBERRY_PI_PIN #Enter the number of the first sensor
+pin2 = RASPBERRY_PI_PIN #Enter the number of the second sensor
+sensor = Adafruit_DHT.DHT22 #If you´re using the DHT22
+
+# offset last values with values from pin1
+lasthumidity, lasttemperature = Adafruit_DHT.read_retry(sensor, pin1)
+ 
+def measure(channel):
+    try:
+        humidity1, temperature1 = Adafruit_DHT.read_retry(sensor, pin1)
+        humidity2, temperature2 = Adafruit_DHT.read_retry(sensor, pin2)
+
+        averagetemperature = (temperature1 + temperature2) / 2
+        averagehumidity = (humidity1 + humidity2) / 2
+
+        # if the temp is higher than 50 or lower than 10, the value can not be right
+        if (averagetemperature <= 50) & (averagetemperature >= 10): 
+            temperature = averagetemperature 
+        else:
+            temperature = lasttemperature
+        # if the humidity is higher than 80 or lower than 20, the value can not be right
+        if (averagehumidity <= 80) & (averagehumidity >= 10): 
+            humidity = averagehumidity 
+        else:
+            humidity = lasthumidity
+
+        # write
+        response = channel.update({'field1': temperature, 'field2': humidity})
+        
+        # read
+        read = channel.get({})
+        print("written")
+
+        # save values 
+        lasttemperature = temperature
+        lasthumidity = humidity
+        
+    except:
+        print("connection failed")
+ 
+ 
+if __name__ == "__main__":
+    channel = thingspeak.Channel(id=channel_id, write_key=write_key, api_key=read_key)
+    while True:
+        measure(channel)
+        time.sleep(60)
+```
+
