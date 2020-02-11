@@ -2,11 +2,11 @@ import thingspeak
 import time
 import Adafruit_DHT
  
-channel_id = 970724 
-write_key  = 'I816GVMOX4GSWWLJ' 
-read_key   = 'GN4DEPT2WV7PNJ8O' 
-pin1 = 4
-pin2 = 10
+channel_id = your_channel_id 
+write_key  = 'your_key' 
+read_key   = 'your_key' 
+pin1 = your_first_pin_number
+pin2 = your_second_pin_number
 sensor = Adafruit_DHT.DHT22
 
 # offset last values with values from pin1
